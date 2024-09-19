@@ -27,7 +27,7 @@ export interface asakafortuneDatabase {
 // 问候词
 let graetingText = [
     // 早
-    ["#user#早上好", "#user#早好捏~", "#user#早(´～`)"],
+    ["#user#早上好ヾ(•ω•`)o", "#user#早好捏~", "#user#早(´～`)"],
     // 中
     ["#user#中午好（￣▽￣）", "#user#午好捏", "#user#午好~现在睡午觉再合适不过了♪(´▽｀)", ],
     // 下午
