@@ -129,13 +129,13 @@ export function apply(ctx: Context) {
                 // 计算等级
                 if (total <= 5) {
                     result.level = 0;
-                } else if (total <= 9) {
+                } else if (total <= 11) {
                     result.level = 1;
-                } else if (total <= 13) {
+                } else if (total <= 16) {
                     result.level = 2;
                 } else if (total <= 20) {
                     result.level = 3;
-                } else if (total <= 23) {
+                } else if (total <= 25) {
                     result.level = 4;
                 } else if (total <= 30) {
                     result.level = 5;
