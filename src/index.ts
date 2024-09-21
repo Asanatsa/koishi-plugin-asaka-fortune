@@ -29,7 +29,7 @@ let graetingText = [
     // 早
     ["#user#早上好ヾ(•ω•`)o", "#user#早好捏~", "#user#早(´～`)"],
     // 中
-    ["#user#中午好（￣▽￣）", "#user#午好捏", "#user#午好~现在睡午觉再合适不过了♪(´▽｀)", ],
+    ["#user#中午好（￣▽￣）", "#user#午好捏", "#user#午好~现在睡午觉再合适不过了♪(´▽｀)",],
     // 下午
     ["#user#下午好~"],
     // 晚上
@@ -74,95 +74,104 @@ export function apply(ctx: Context) {
             let userId = (await ctx.database.getUser(session.event.platform, session.event.user.id, ["id"])).id
             let userPlatform = session.event.platform
             let userData = await ctx.database.get("asakafortune", userId);
+            let result = {} as { a?: number, b?: number, c?: number, level?: number, sid?: number };
 
             let date = new Date();
             let period = 0;
 
-            if( 5 <= date.getHours() && date.getHours() < 10 ) {
+            if (5 <= date.getHours() && date.getHours() < 10) {
                 // 早
                 period = 0;
-            } else if( 10 <= date.getHours() && date.getHours() < 14 ){
+            } else if (10 <= date.getHours() && date.getHours() < 14) {
                 // 中午
                 period = 1;
-            } else if( 14 <= date.getHours() && date.getHours() < 19 ){
+            } else if (14 <= date.getHours() && date.getHours() < 19) {
                 // 下午
                 period = 2;
-            } else if( 19 <= date.getHours() || date.getHours() < 5 ){
+            } else if (19 <= date.getHours() || date.getHours() < 5) {
                 // 晚上
                 period = 3;
             }
 
+            let graeting = Random.pick(graetingText[period]).replace("#user#", session.event.user.name);
 
+
+            // 财运
+            result["a"] = Random.int(1, 11);
+            // 桃花运
+            result["b"] = Random.int(1, 11);
+            // 事业运
+            result["c"] = Random.int(1, 11);
+
+            let total = result.a + result.b + result.c;
+
+            // 计算等级
+            if (total <= 5) {
+                result.level = 0;
+            } else if (total <= 11) {
+                result.level = 1;
+            } else if (total <= 16) {
+                result.level = 2;
+            } else if (total <= 20) {
+                result.level = 3;
+            } else if (total <= 25) {
+                result.level = 4;
+            } else if (total <= 30) {
+                result.level = 5;
+            }
+
+            result.sid = Random.int(0, fortuneSummary[result.level].length);
 
 
             if (userData.length !== 0) {
                 let timestamp = new Date(userData[0].timestamp)
                 if (timestamp.toLocaleDateString() === date.toLocaleDateString()) {
-                   let result = userData[0].data as { a?: number, b?: number, c?: number, level?: number, sid?: number };
+                    let fdata = userData[0].data as { a?: number, b?: number, c?: number, level?: number, sid?: number };
 
-                   let graeting = Random.pick(graetingText[period]).replace("#user#", session.event.user.name);
 
-                   let outText = `${graeting}\n今天已经抽过了\n别想骗我\<( ￣^￣)\n\n` +
-                   `财运：${result.a}\n` +
-                   `桃花运：${result.b}\n` +
-                   `事业运：${result.c}\n\n` +
-                   `整体运势：${fortune[result.level]}\n\n` +
-                   `${fortuneSummary[result.level][result.sid]}`;
-   
-                   return outText;
+
+                    let outText = `${graeting}\n今天已经抽过了\n别想骗我\<( ￣^￣)\n\n` +
+                        `财运：${fdata.a}\n` +
+                        `桃花运：${fdata.b}\n` +
+                        `事业运：${fdata.c}\n\n` +
+                        `整体运势：${fortune[fdata.level]}\n\n` +
+                        `${fortuneSummary[fdata.level][fdata.sid]}`;
+
+                    return outText;
+                } else {
+                    // 保存数据到数据库
+                    await ctx.database.upsert("asakafortune", (row) => [
+                        { id: userId, platform: userPlatform, timestamp: new Date(), data: result }
+                    ])
+
+                    let outText = `${graeting}\n今天就由我来给你占卜一下吧♪(^∇^*)\n\n` +
+                        `财运：${result.a}\n` +
+                        `桃花运：${result.b}\n` +
+                        `事业运：${result.c}\n\n` +
+                        `整体运势：${fortune[result.level]}\n\n` +
+                        `${fortuneSummary[result.level][result.sid]}`;
+
+                    return outText;
                 }
             } else {
-                
-
-                let result = {} as { a?: number, b?: number, c?: number, level?: number, sid?: number };
-                //let level = 0
-
-                // 财运
-                result["a"] = Random.int(1, 11);
-                // 桃花运
-                result["b"] = Random.int(1, 11);
-                // 事业运
-                result["c"] = Random.int(1, 11);
-
-                let total = result.a + result.b + result.c;
-
-                // 计算等级
-                if (total <= 5) {
-                    result.level = 0;
-                } else if (total <= 11) {
-                    result.level = 1;
-                } else if (total <= 16) {
-                    result.level = 2;
-                } else if (total <= 20) {
-                    result.level = 3;
-                } else if (total <= 25) {
-                    result.level = 4;
-                } else if (total <= 30) {
-                    result.level = 5;
-                }
-
-                result.sid = Random.int(0, fortuneSummary[result.level].length);
-
 
                 // 保存数据到数据库
                 await ctx.database.upsert("asakafortune", (row) => [
                     { id: userId, platform: userPlatform, timestamp: new Date(), data: result }
                 ])
 
-                let graeting = Random.pick(graetingText[period]).replace("#user#", session.event.user.name);
-
                 let outText = `${graeting}\n今天就由我来给你占卜一下吧♪(^∇^*)\n\n` +
-                `财运：${result.a}\n` +
-                `桃花运：${result.b}\n` +
-                `事业运：${result.c}\n\n` +
-                `整体运势：${fortune[result.level]}\n\n` +
-                `${fortuneSummary[result.level][result.sid]}`;
+                    `财运：${result.a}\n` +
+                    `桃花运：${result.b}\n` +
+                    `事业运：${result.c}\n\n` +
+                    `整体运势：${fortune[result.level]}\n\n` +
+                    `${fortuneSummary[result.level][result.sid]}`;
 
                 return outText;
 
             }
 
-            
+
 
             //return JSON.stringify(await ctx.database.stats())
             //return JSON.stringify(await ctx.database.get("asakafortune", userId));
